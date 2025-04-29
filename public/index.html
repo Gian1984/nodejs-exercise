@@ -2,108 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Node.js Full CRUD Frontend</title>
+    <title>Immo to sell Ixelles</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
-<body>
-<h1>Articles</h1>
-<ul id="articles"></ul>
+<body class="bg-light p-4">
 
-<h2 id="formTitle">Add Article</h2>
-<form id="articleForm">
-    <input type="text" id="title" placeholder="Title" required />
-    <input type="text" id="author" placeholder="Author" required />
-    <button type="submit">Save</button>
-    <button type="button" id="cancelEdit" style="display:none;">Cancel</button>
-</form>
+<div class="container">
+    <h1 class="mb-4 text-center">Immo</h1>
+
+    <div class="d-flex justify-content-between mb-3">
+        <h2>Saved</h2>
+        <button class="btn btn-primary" onclick="importFromZimmo()">🔄 Import from Zimmo</button>
+    </div>
+
+    <ul id="houseList" class="list-group mb-5"></ul>
+
+    <h2 class="mb-3">Imported immo from Zimmo result</h2>
+    <div id="importedList" class="row g-3"></div>
+</div>
 
 <script>
     let editMode = false;
-    let editArticleId = null;
+    let editHouseId = null;
 
-    async function loadArticles() {
-        const res = await fetch('http://localhost:3000/api/articles');
-        const articles = await res.json();
-        const list = document.getElementById('articles');
+    // load immo from MongoDB
+    async function loadHouses() {
+        const res = await fetch('/api/houses');
+        const houses = await res.json();
+        const list = document.getElementById('houseList');
         list.innerHTML = '';
 
-        articles.forEach(article => {
+        houses.forEach(h => {
             const item = document.createElement('li');
+            item.className = 'list-group-item';
             item.innerHTML = `
-                <strong>${article.title}</strong> by ${article.author}
-                <button onclick="editArticle('${article._id}', '${article.title}', '${article.author}')">Edit</button>
-                <button onclick="deleteArticle('${article._id}')">Delete</button>
+              <div class="d-flex align-items-start">
+                <img src="${h.image || 'https://via.placeholder.com/100'}" class="me-3" style="width:100px; height:80px; object-fit:cover;">
+                <div class="flex-grow-1">
+                  <h5>${h.title}</h5>
+                  <p class="mb-1"><small>📍 ${h.location || 'N/A'} | 💶 ${h.price || 'N/A'}</small></p>
+                  <p class="mb-2"><a href="${h.link}" target="_blank">🔗 look on the web site</a></p>
+                  <textarea class="form-control mb-2" rows="2" placeholder="Add note..." onchange="saveNote('${h._id}', this.value)">${h.note || ''}</textarea>
+                  <button class="btn btn-sm btn-danger" onclick="deleteHouse('${h._id}')">🗑️ Delete</button>
+                </div>
+              </div>
             `;
             list.appendChild(item);
         });
     }
 
-    async function addArticle(title, author) {
-        await fetch('http://localhost:3000/api/articles', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ title, author })
-        });
-    }
-
-    async function updateArticle(id, title, author) {
-        await fetch(`http://localhost:3000/api/articles/${id}`, {
+    // Save note for an immo
+    async function saveNote(id, note) {
+        await fetch(`/api/houses/${id}/note`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ title, author })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note })
         });
     }
 
-    async function deleteArticle(id) {
-        if (confirm('Are you sure you want to delete this article?')) {
-            await fetch(`http://localhost:3000/api/articles/${id}`, {
-                method: 'DELETE'
-            });
-            loadArticles();
+    // Elimina una casa
+    async function deleteHouse(id) {
+        if (confirm('Sicuro di voler eliminare questo annuncio?')) {
+            await fetch(`/api/houses/${id}`, { method: 'DELETE' });
+            loadHouses();
         }
     }
 
-    function editArticle(id, title, author) {
-        document.getElementById('title').value = title;
-        document.getElementById('author').value = author;
-        document.getElementById('formTitle').innerText = 'Edit Article';
-        document.getElementById('cancelEdit').style.display = 'inline';
-        editMode = true;
-        editArticleId = id;
+    // Import from /api/scrape
+    async function importFromZimmo() {
+        const res = await fetch('/api/scrape');
+        const houses = await res.json();
+        const importedList = document.getElementById('importedList');
+        importedList.innerHTML = '';
+
+        houses.forEach(h => {
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+              <div class="card h-100">
+                <img src="${h.image || 'https://via.placeholder.com/300'}" class="card-img-top" style="height:200px; object-fit:cover;">
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title">${h.title}</h5>
+                  <p class="card-text"><small>📍 ${h.location || 'N/A'}<br>💶 ${h.price || 'N/A'}</small></p>
+                  <a href="${h.link}" target="_blank" class="btn btn-sm btn-primary mb-2">🔗 Look on the web site</a>
+                  <button class="btn btn-success mt-auto" onclick='saveImportedHouse(${JSON.stringify(h)})'> Save </button>
+                </div>
+              </div>
+            `;
+            importedList.appendChild(col);
+        });
     }
 
-    document.getElementById('articleForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('title').value.trim();
-        const author = document.getElementById('author').value.trim();
-
-        if (editMode) {
-            await updateArticle(editArticleId, title, author);
-        } else {
-            await addArticle(title, author);
-        }
-
-        resetForm();
-        loadArticles();
-    });
-
-    document.getElementById('cancelEdit').addEventListener('click', () => {
-        resetForm();
-    });
-
-    function resetForm() {
-        document.getElementById('title').value = '';
-        document.getElementById('author').value = '';
-        document.getElementById('formTitle').innerText = 'Add Article';
-        document.getElementById('cancelEdit').style.display = 'none';
-        editMode = false;
-        editArticleId = null;
+    // Save immo
+    async function saveImportedHouse(house) {
+        await fetch('/api/houses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(house)
+        });
+        alert('✅ Annuncio salvato!');
+        loadHouses();
     }
 
-    loadArticles();
+    loadHouses();
 </script>
+
+<script src="js/bootstrap.min.js"></script>
 </body>
 </html>
+

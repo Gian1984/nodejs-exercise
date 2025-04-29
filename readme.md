@@ -1,130 +1,122 @@
-# Node.js + MongoDB (Docker) Project Setup - Commands and Explanations
+# 🏠 Node.js + MongoDB Real Estate Scraper App
 
-This markdown file summarizes **all the commands** along with clear **explanations**.
+This project is a **full-stack web app** that allows you to:
+-  Scrape real estate listings from [Zimmo](https://www.zimmo.be)
+-  Select and store specific listings
+-  Add personal notes per listing
+-  Display images, price, location, and links
+-  Delete or edit saved listings
+-  Save everything persistently in MongoDB
 
 ---
 
-## 1. Create and Initialize Node.js Project
+## Project Setup
+
+### 1. Initialize the Project
 
 ```bash
-mkdir nodejs-exercise
-cd nodejs-exercise
+mkdir real-estate-scraper
+cd real-estate-scraper
 npm init -y
 ```
 
-**Explanation:**
-- Create a new project folder.
-- Initialize a `package.json` file automatically.
-
----
-
-## 2. Install Project Dependencies
+### 2. Install Dependencies
 
 ```bash
-npm install express mongoose cors
-npm install --save-dev nodemon jest supertest
+npm install express mongoose cors puppeteer cheerio
+npm install --save-dev nodemon
 ```
 
-**Explanation:**
-- Install **Express** for API routes.
-- Install **Mongoose** to connect Node.js with MongoDB.
-- Install **CORS** to allow frontend requests.
-- Install **nodemon** for automatic server reload during development.
-- Install **jest** and **supertest** for writing tests.
-
----
-
-## 3. Set Up Docker MongoDB Container
+### 3. Run MongoDB with Docker
 
 ```bash
 docker run --name mongodb -d -p 27017:27017 mongo
 ```
 
-**Explanation:**
-- Pull and run the official **MongoDB Docker image**.
-- Name the container `mongodb`.
-- Bind port **27017** from the container to your local machine.
+To verify it's running:
 
-To check running containers:
 ```bash
 docker ps
 ```
 
----
+### 4. Add Dev Script in `package.json`
 
-## 4. Start the Node.js Server
+```json
+"scripts": {
+  "dev": "nodemon server.js"
+}
+```
+
+Start your server:
 
 ```bash
 npm run dev
 ```
 
-**Explanation:**
-- Starts the server using **nodemon**.
-- Watches for file changes and restarts automatically.
+---
+
+## 🔗 API Endpoints
+
+| Method | Route                      | Action                      |
+|--------|----------------------------|-----------------------------|
+| GET    | `/api/houses`             | Get all saved listings      |
+| POST   | `/api/houses`             | Save a new listing          |
+| DELETE | `/api/houses/:id`         | Delete a listing            |
+| PUT    | `/api/houses/:id/note`    | Add/edit a personal note    |
+| GET    | `/api/scrape`             | Scrape listings from Zimmo  |
 
 ---
 
-## 5. Basic CRUD Operations Implemented
+## Frontend (`index.html`)
 
-| Method | Endpoint | Action |
-|:-------|:---------|:-------|
-| GET    | `/api/articles` | List all articles |
-| GET    | `/api/articles/:id` | Get a single article |
-| POST   | `/api/articles` | Create a new article |
-| PUT    | `/api/articles/:id` | Update an article |
-| DELETE | `/api/articles/:id` | Delete an article |
+Uses JavaScript + Fetch API to:
+- Load all saved listings
+- Save a listing from the form or from scrape
+- Delete or edit listings
+- Add a **note** to saved listings
+- Display title, location, image, price, link
 
-**Explanation:**
-- We have built a full CRUD API using Express and MongoDB.
-- Mongoose automatically handles collection creation when saving documents.
+**UI**: Built with Bootstrap 5
 
 ---
 
-## 6. Frontend Interaction
+##  MongoDB Shell Access (Optional)
 
-Frontend (`index.html`) uses **JavaScript Fetch API** to:
-- Load articles.
-- Create new articles.
-- Edit articles.
-- Delete articles.
-
----
-
-## 7. MongoDB Quick Access (Optional)
-
-Connect to MongoDB inside Docker:
+Connect to MongoDB running in Docker:
 
 ```bash
 docker exec -it mongodb mongosh
 ```
 
-Inside Mongo shell:
-```bash
+Inside the shell:
+
+```js
 use testdb
 show collections
-db.articles.find().pretty()
+db.houses.find().pretty()
 ```
 
-**Explanation:**
-- `mongosh` is MongoDB's shell.
-- You can explore and query your database directly.
+---
+
+##  Project Status
+
+-  Express backend running
+-  MongoDB container active
+-  Zimmo scraping functional
+-  Full CRUD API operational
+-  Interactive frontend working
 
 ---
 
-#  Project Status
-- Node.js server running 
-- MongoDB container running 
-- Full CRUD API working 
-- Frontend connected to backend 
+##  Optional Next Steps
+
+- [ ] Dockerize the Node.js app with `docker-compose`
+- [ ] Add authentication (JWT)
+- [ ] Deploy the app (e.g. Render, Railway, Vercel)
+- [ ] Enable multi-city scraping
+- [ ] Connect MongoDB Compass for DB GUI
 
 ---
 
-#  Next Steps (Optional)
-- Connect with MongoDB Compass (GUI for DB browsing)
-- Dockerize Node.js app (Docker Compose)
-- Add authentication (JWT)
-- Prepare deployment to production (Render, Railway, Vercel)
-
----
 
 
